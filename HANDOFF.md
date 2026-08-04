@@ -40,7 +40,7 @@ python scripts/vlm_eval.py predict --backend vlm \
     --adapter runs/vlm/qwen25vl3b/adapter_final \
     --data datasets/marine_vlm/val.jsonl --out preds_vlm.json
 
-# 3) 같은 지표로 채점
+# 4) 같은 지표로 채점
 python scripts/vlm_eval.py score preds_yolo.json preds_vlm.json --conf 0.6
 ```
 
@@ -50,7 +50,7 @@ python scripts/vlm_eval.py score preds_yolo.json preds_vlm.json --conf 0.6
 
 ## 시간이 오래 걸립니다
 
-VLM은 생성 방식이라 **val 전량 13,020장 추론에 4~7시간**입니다(장당 1~2초). 줄이려면:
+**실측 장당 2.8초**(RTX 3090 1장, 스모크 10장 p50). val 전량 13,020장이면 **약 10시간**입니다. 줄이려면:
 
 ```bash
 python scripts/vlm_prepare.py --root ... --out datasets/marine_vlm --stride 4
@@ -65,6 +65,19 @@ python scripts/vlm_prepare.py --root ... --out datasets/marine_vlm --stride 4
 2. **학습셋에 빈 프레임이 0장입니다.** 71858 개방분은 모든 프레임에 선박이 있어 VLM이 "없다"고 답하는 법을 못 배웠습니다. **빈 바다에서 환각 위험**이 있고, YOLO는 구조적으로 무탐지가 자연스러운 반면 VLM은 아닙니다. 이 비대칭을 적어야 합니다.
 3. **YOLO에 유리한 조건이 하나 있습니다.** `best_spot.pt`는 val을 조기 종료·체크포인트 선택에 썼고, VLM은 2 epoch 고정이라 그 이점이 없습니다.
 4. **이 비교는 닫힌 3클래스 한정입니다.** VLM의 강점인 open-set(학습에 없던 물체)은 이 벤치마크가 측정하지 않습니다. YOLO가 이겨도 *"VLM이 쓸모없다"*가 아니라 *"닫힌 클래스 탐지에는 전용 탐지기가 낫다"*까지만 말할 수 있습니다.
+
+---
+
+## 인계 전 검증한 것 (이쪽에서 확인 완료)
+
+| 항목 | 결과 |
+|---|---|
+| 어댑터 로드 + 예측 | ✅ 정상 |
+| 파싱 실패율 | **0%** (10장) |
+| 좌표 정확성 | ✅ 연속 프레임에서 박스가 부드럽게 이동 (1591→1518→1456→1391) |
+| 추론 지연 | 장당 2.77초 (p50) |
+
+즉 **모델과 좌표 변환은 이미 검증됐습니다.** 남은 건 전량 추론과 채점입니다.
 
 ---
 
