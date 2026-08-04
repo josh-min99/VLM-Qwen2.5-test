@@ -172,7 +172,23 @@ def main():
     model.config.use_cache = False
 
     # ViT는 동결. 소형 객체 때문에 나중에 풀고 싶어지겠지만, 먼저 baseline부터.
-    for p in model.visual.parameters():
+    # 🔴 비전 타워 경로가 transformers 버전마다 다르다.
+    #    4.x: model.visual  /  5.x: model.model.visual
+    #    경로를 가정하면 AttributeError로 죽는다(실제로 겪음). 찾아서 쓴다.
+    visual = None
+    for path in ("visual", "model.visual", "model.vision_tower", "vision_tower"):
+        obj = model
+        try:
+            for part in path.split("."):
+                obj = getattr(obj, part)
+            visual = obj
+            print(f"vision tower: {path} ({type(obj).__name__})")
+            break
+        except AttributeError:
+            continue
+    if visual is None:
+        raise SystemExit(f"비전 타워를 못 찾음. 최상위 자식: {[n for n, _ in model.named_children()]}")
+    for p in visual.parameters():
         p.requires_grad = False
 
     from peft import LoraConfig, get_peft_model
