@@ -205,6 +205,10 @@ def main():
         dataloader_num_workers=4,
         remove_unused_columns=False,
         report_to="none",
+        # 다중 GPU는 torchrun --nproc_per_node=N 으로 DDP. ViT를 동결했지만 학습되는
+        # 파라미터(LoRA)는 매 forward에 전부 쓰이므로 unused 탐색은 꺼도 된다(더 빠름).
+        # DDP 에러가 나면 True로 올릴 것.
+        ddp_find_unused_parameters=False,
     )
     pad_id = proc.tokenizer.pad_token_id or proc.tokenizer.eos_token_id
     Trainer(model=model, args=targs, train_dataset=train_ds,
