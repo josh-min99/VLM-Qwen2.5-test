@@ -33,12 +33,19 @@ cd VLM-Qwen2.5-test && pip install -r requirements.txt
 python scripts/vlm_prepare.py --root ../YOLO-pipeline/datasets/marine --out datasets/marine_vlm
 #    -> [val] 13020 images / 14272 boxes  이어야 함. 다르면 벤치마크가 다른 것
 
-# 2) 예측 뽑기 (두 백엔드 모두 같은 데이터로)
+# 2) 어댑터 받기 — Drive: 71856_train/qwen25vl3b_adapter.tgz (265MB)
+mkdir -p runs/vlm/qwen25vl3b && tar xzf qwen25vl3b_adapter.tgz -C runs/vlm/qwen25vl3b
+#    -> runs/vlm/qwen25vl3b/adapter_final/ 안에 USAGE.txt 도 들어 있음
+
+# 3) 예측 뽑기 (두 백엔드 모두 같은 데이터로)
 python scripts/vlm_eval.py predict --backend yolo --weights best_spot.pt \
     --data datasets/marine_vlm/val.jsonl --out preds_yolo.json
 python scripts/vlm_eval.py predict --backend vlm \
     --adapter runs/vlm/qwen25vl3b/adapter_final \
+    --base-model Qwen/Qwen2.5-VL-3B-Instruct \
     --data datasets/marine_vlm/val.jsonl --out preds_vlm.json
+#    🔴 인자명은 --base-model 이다(--model 아님).
+#    베이스 모델을 미리 받아뒀다면 로컬 경로도 됨: --base-model /path/to/qwen25vl3b
 
 # 4) 같은 지표로 채점
 python scripts/vlm_eval.py score preds_yolo.json preds_vlm.json --conf 0.6
