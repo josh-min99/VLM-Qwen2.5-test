@@ -3,6 +3,16 @@
 > 이 문서는 **모델을 받아서 YOLO와 비교 평가를 진행할 사람**을 위한 것입니다.
 > 학습은 끝났고, 여기서는 예측을 뽑아 채점하는 것만 하면 됩니다.
 
+**받을 것은 두 개뿐입니다** (Drive 공유폴더 `vlm_handoff/`):
+
+| 파일 | 크기 | 내용 |
+|---|---|---|
+| `qwen25vl3b_adapter.tgz` | 265MB | 학습된 Qwen2.5-VL LoRA 어댑터 |
+| `best_spot.pt` | 19MB | 비교 기준 YOLO11s |
+
+> ⚠️ 같은 Drive에 `71856_train/`(합성데이터 77GB)이 있지만 **이 실험과 무관합니다.**
+> VLM도 YOLO 기준모델도 **71858 실데이터만** 학습했습니다. 그쪽은 보지 마세요.
+
 ---
 
 ## 🔴 어댑터만으로는 못 씁니다
@@ -33,7 +43,9 @@ cd VLM-Qwen2.5-test && pip install -r requirements.txt
 python scripts/vlm_prepare.py --root ../YOLO-pipeline/datasets/marine --out datasets/marine_vlm
 #    -> [val] 13020 images / 14272 boxes  이어야 함. 다르면 벤치마크가 다른 것
 
-# 2) 어댑터 받기 — Drive: 71856_train/qwen25vl3b_adapter.tgz (265MB)
+# 2) 어댑터·기준모델 받기 — Drive 공유폴더의 vlm_handoff/ 안에 둘 다 있음
+#      qwen25vl3b_adapter.tgz  265MB   학습된 VLM 어댑터
+#      best_spot.pt             19MB   비교 기준 YOLO11s (실데이터만 학습)
 mkdir -p runs/vlm/qwen25vl3b && tar xzf qwen25vl3b_adapter.tgz -C runs/vlm/qwen25vl3b
 #    -> runs/vlm/qwen25vl3b/adapter_final/ 안에 USAGE.txt 도 들어 있음
 
